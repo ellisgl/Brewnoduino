@@ -37,6 +37,10 @@ aRep.bind(3000, null, null);
 // Brew log.
 var logFile    = "";
 
+// Stop the IDE warnings.
+var i          = 0; // Counter variable
+var analog     = "";
+
 // all environments
 app.set('port', process.env.PORT || 8001);
 app.set('views', path.join(__dirname, 'views'));
@@ -78,22 +82,15 @@ function thermistor(data, resistor)
 
 function tmp36(data, voltage)
 {
-    var v     = data * voltage;
-    v        /= 1024.0;
-    var temp  = (v - 0.5) * 100; // Convert to Celsius.
+    var v  = data * voltage;
+    v     /= 1024.0;
 
-    return temp;
+    return (v - 0.5) * 100; // Convert to Celsius.
 }
 
 function roundTo(num, places)
 {
     return +(Math.round(num + "e+"+places) + "e-"+places);
-}
-
-// Convert Fahrenheit to Celsius
-function convertFC(temp)
-{
-    return (temp - 32) * 5.0 / 9;
 }
 
 // Convert Celsius to Fahrenheit
@@ -116,23 +113,23 @@ var ports        = {
 };
 
 // Fill in for the tracking states.
-for(var i = 0; i < config.brewnoduino.outputs.pwm.length; i++)
+for(i = 0; i < config.brewnoduino.outputs.pwm.length; i++)
 {
     ports.output.pwm[config.brewnoduino.outputs.pwm[i].port] = {'value' : 0};
 }
 
-for(var i = 0; i < config.brewnoduino.outputs.digital.length; i++)
+for(i = 0; i < config.brewnoduino.outputs.digital.length; i++)
 {
     ports.output.digital[config.brewnoduino.outputs.digital[i].port] = {'value' : 0};
 }
 
-for(var i = 0; i < config.brewnoduino.inputs.analog.length; i++)
+for(i = 0; i < config.brewnoduino.inputs.analog.length; i++)
 {
     // sArr = Smoothing array.
     ports.input.analog[config.brewnoduino.inputs.analog[i].port] = {'value' : 0, 'cnt' : 0, 'sArr' : []};
 }
 
-for(var i = 0; i < config.brewnoduino.inputs.digital.length; i++)
+for(i = 0; i < config.brewnoduino.inputs.digital.length; i++)
 {
     ports.input.digital[config.brewnoduino.inputs.digital[i].port] = {'value' : 0};
 }
@@ -140,13 +137,13 @@ for(var i = 0; i < config.brewnoduino.inputs.digital.length; i++)
 board.on('connection', function ()
 {
     // Run through the config again and setup the pin write modes.
-    for (var i = 0; i < config.brewnoduino.outputs.pwm.length; i++)
+    for (i = 0; i < config.brewnoduino.outputs.pwm.length; i++)
     {
         var pwm = config.brewnoduino.outputs.pwm[i];
         board.pinMode(pwm.port, board.PWM);
     }
 
-    for (var i = 0; i < config.brewnoduino.outputs.digital.length; i++)
+    for (i = 0; i < config.brewnoduino.outputs.digital.length; i++)
     {
         var digital = config.brewnoduino.outputs.digital[i];
 
@@ -154,9 +151,9 @@ board.on('connection', function ()
     }
 
     // Run through the config again to setup the analog reads
-    for (var i = 0; i < config.brewnoduino.inputs.analog.length; i++)
+    for (i = 0; i < config.brewnoduino.inputs.analog.length; i++)
     {
-        var analog = config.brewnoduino.inputs.analog[i];
+        analog = config.brewnoduino.inputs.analog[i];
 
         board.analogRead(board[analog.port], function (val)
         {
@@ -289,26 +286,25 @@ board.on('connection', function ()
     // WebSocket connection handler
     io.sockets.on('connection', function (socket)
     {
-        sock = socket;
         socket.emit('CONNECTED!');
 
          // Output current digital / PWM values
-        for(var i = 0; i < config.brewnoduino.outputs.digital.length ; i++)
+        for(i = 0; i < config.brewnoduino.outputs.digital.length ; i++)
         {
             var digital = config.brewnoduino.outputs.digital[i];
             setDigital(digital.port, ports.output.digital[digital.port].value);
         }
 
-        for(var i = 0; i < config.brewnoduino.outputs.pwm.length ; i++)
+        for(i = 0; i < config.brewnoduino.outputs.pwm.length ; i++)
         {
             var pwm = config.brewnoduino.outputs.pwm[i];
             setPWM(pwm.port, ports.output.pwm[pwm.port].value);
         }
 
         // Run through configs yet another time to setup the analog emitters.
-        for(var i = 0; i < config.brewnoduino.inputs.analog.length; i++)
+        for(i = 0; i < config.brewnoduino.inputs.analog.length; i++)
         {
-            var analog = config.brewnoduino.inputs.analog[i];
+            analog = config.brewnoduino.inputs.analog[i];
 
             setInterval(function()
             {
