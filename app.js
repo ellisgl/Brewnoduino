@@ -40,6 +40,7 @@ var logFile    = "";
 // Stop the IDE warnings.
 var i          = 0; // Counter variable
 var analog     = "";
+var tReading   = 0;
 
 // all environments
 app.set('port', process.env.PORT || 8001);
@@ -155,61 +156,93 @@ board.on('connection', function ()
     {
         analog = config.brewnoduino.inputs.analog[i];
 
-        board.analogRead(board[analog.port], function (val)
+        if(analog.port != 'OneWire')
         {
-           // Smooth the analog reading
-           if(ports.input.analog[analog.port].cnt == 24)
-           {
-               // Reset counter
-               ports.input.analog[analog.port].cnt = 0;
-
-               // Sort values
-               ports.input.analog[analog.port].sArr.sort();
-
-               // Drop highest
-               ports.input.analog[analog.port].sArr.pop();
-
-               // Drop lowest
-               ports.input.analog[analog.port].sArr.shift();
-
-               // Get sum for Average
-               var sum = ports.input.analog[analog.port].sArr.reduce(function(a, b) { return a + b });
-
-               /**
-                { name: 'brew pot',
-                   port: 'A0',
-                   display: 'temperature',
-                   units: 'f' }
-                */
-               // Convert to F and store
-               if(analog.display == 'temperature')
+            board.analogRead(board[analog.port], function (val)
+            {
+               // Smooth the analog reading
+               if(ports.input.analog[analog.port].cnt == 24)
                {
-                    ports.input.analog[analog.port].val = roundTo((analog.units == 'F') ? convertCF(sum / ports.input.analog[analog.port].sArr.length)
-                                                                                        : (sum / ports.input.analog[analog.port].sArr.length), 1).toFixed(1);
+                   // Reset counter
+                   ports.input.analog[analog.port].cnt = 0;
+
+                   // Sort values
+                   ports.input.analog[analog.port].sArr.sort();
+
+                   // Drop highest
+                   ports.input.analog[analog.port].sArr.pop();
+
+                   // Drop lowest
+                   ports.input.analog[analog.port].sArr.shift();
+
+                   // Get sum for Average
+                   var sum = ports.input.analog[analog.port].sArr.reduce(function(a, b) { return a + b });
+
+                   /**
+                    { name: 'brew pot',
+                       port: 'A0',
+                       display: 'temperature',
+                       units: 'f' }
+                    */
+                   // Convert to F and store
+                   if(analog.display == 'temperature')
+                   {
+                        ports.input.analog[analog.port].val = roundTo((analog.units == 'F') ? convertCF(sum / ports.input.analog[analog.port].sArr.length)
+                                                                                            : (sum / ports.input.analog[analog.port].sArr.length), 1).toFixed(1);
+                   }
+                   else
+                   {
+                       ports.input.analog[analog.port].val = (sum / ports.input.analog[analog.port].sArr.length);
+                   }
+
+                   // Reset the array.
+                   ports.input.analog[analog.port].sArr = [];
+
+                   // Get current value
+                   // Using switch for possible future updates.
+                   switch(analog.type)
+                   {
+                       case 'thermistor':
+                           tReading = thermistor(val, config.brewnoduino.resistor)
+                       break;
+
+                       case 'tmp36':
+                           tReading = tmp36(val, config.brewnoduino.voltage);
+                       break;
+                   }
+
+                   ports.input.analog[analog.port].sArr.push((analog.display == 'temperature') ? tReading : val);
+
+                   // Increment counter
+                   ports.input.analog[analog.port].cnt++;
                }
                else
                {
-                   ports.input.analog[analog.port].val = (sum / ports.input.analog[analog.port].sArr.length);
+                   // Get current value
+                   // Using switch for possible future updates.
+                   switch(analog.type)
+                   {
+                       case 'thermistor':
+                           tReading = thermistor(val, config.brewnoduino.resistor)
+                           break;
+
+                       case 'tmp36':
+                           tReading = tmp36(val, config.brewnoduino.voltage);
+                           break;
+                   }
+
+                   ports.input.analog[analog.port].sArr.push((analog.display == 'temperature') ? tReading : val);
+
+                   // Increment counter
+                   ports.input.analog[analog.port].cnt++;
                }
 
-               // Reset the array.
-               ports.input.analog[analog.port].sArr = [];
-
-               // Get current value
-               ports.input.analog[analog.port].sArr.push((analog.display == 'temperature') ? thermistor(val, config.brewnoduino.resistor) : val);
-
-               // Increment counter
-               ports.input.analog[analog.port].cnt++;
-           }
-           else
-           {
-               // Get current value
-               ports.input.analog[analog.port].sArr.push((analog.display == 'temperature') ? thermistor(val, config.brewnoduino.resistor) : val);
-
-               // Increment counter
-               ports.input.analog[analog.port].cnt++;
-           }
-        });
+            });
+        }
+        else
+        {
+            // OneWire stuff
+        }
     }
 
     // Set PWM on Arduino and emit event
