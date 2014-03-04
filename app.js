@@ -5,8 +5,8 @@
  */
 /**
  * TODO:
- * Scheduler
- * Digital input
+ * Scheduler: Compile into function to run in async
+ * Digital input displays
  * OneWire Temperature support
  * Manual Temp setting
  * Clean this mess up
@@ -27,7 +27,7 @@ var fs         = require('fs');
 var serialPort = '/dev/ttyACM0';
 var board      = require('./firmataConnector').start(serialPort);
 
-// Schedule runner - child process. (Just for now -- could case blockage, maybe)
+// Schedule runner - child process. (Just for now -- might bring it back into the main if it proves not to block)
 var cProcess   = require('child_process');
 var sRunner    = cProcess.fork('./scheduler');
 var logFile    = "";
@@ -342,13 +342,6 @@ board.on('connection', function ()
         {
             var ts = new Date() / 1000;
             // Logs all port values
-            // Loop
-            /**
-             * 00000000 :::: {}
-             * 00000001 :::: {}
-             * 00000002 :::: {}
-             *
-             */
             logFile.write(ts + ' :::: ' + JSON.stringify(ports) + '\n');
         });
 
