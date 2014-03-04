@@ -59,6 +59,7 @@ test = [
     function(cb)
     {
         // Finsiehd
-        aReq.send({'action' : 'done'})
+        aReq.send({'action' : 'done'});
+        cb(null);
     }
 ];
