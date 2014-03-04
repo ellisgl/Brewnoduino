@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title><%= title %></title>
+        <link rel='stylesheet' href='/c/style.css' />
+        <!--[if lt IE 9]><script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+        <script src="/j/jquery.js"></script>
+        <script src="/j/canv-gauge/gauge.min.js"></script>
+        <script src="/j/jquery.knob.js"></script>
+        <script src="/socket.io/socket.io.js"></script>
+    </head>
+    <body>
+        <div class="wrapper">
+            <div class="middle">
+                <div class="container">
+                    <main class="content">
+                        <% if(config.brewnoduino.outputs.pwm.length > 0) { %>
+                        <div class="row">
+                            <span class="pLabel">PWM CONTROL</span>
+                        </div>
+                        <div class="row">
+                            <% for(var i = 0; i < config.brewnoduino.outputs.pwm.length; i++) { %>
+                            <div class="kWrapper">
+                                <input type="text" id="pwm<%= config.brewnoduino.outputs.pwm[i].port %>" value="0" class="dial" data-fgColor="#66CC66" data-min="0" data-max="255" data-angleOffset="-125" data-angleArc="250" data-width="100" data-height="100" />
+                                <div class="pLabel"><%= config.brewnoduino.outputs.pwm[i].name %></div>
+                            </div>
+                            <% } %>
+                            <div class="clearFix"></div>
+                        </div>
+                        <% } %>
+                        <% if(config.brewnoduino.outputs.digital.length > 0) { %>
+                        <div class="row">
+                            <span class="pLabel">DIGITAL CONTROL</span>
+                        </div>
+                        <div class="row">
+                            <% for(var i = 0; i < config.brewnoduino.outputs.digital.length; i++) { %>
+                            <div class="sWrapper">
+                                <div id="d<%= config.brewnoduino.outputs.digital[i].port %>" class="switch"></div>
+                                <div class="rotate tapeText"><span class="rotate-inner"><%= config.brewnoduino.outputs.digital[i].name %></span></div>
+                            </div>
+                            <% } %>
+                            <div class="clearFix"></div>
+                        </div>
+                        <% } %>
+                    </main><!-- .content -->
+                </div><!-- .container-->
+                <aside class="right-sidebar">
+                    <% for(var i = 0; i < config.brewnoduino.inputs.analog.length; i++) { %>
+                    <% if(config.brewnoduino.inputs.analog[i].display == 'temperature') { %>
+                    <div class="pLabel"><%= config.brewnoduino.inputs.analog[i].name %></div>
+                    <canvas id="<%= config.brewnoduino.inputs.analog[i].port %>"></canvas>
+                    <% } %>
+                    <% } %>
+                </aside><!-- .right-sidebar -->
+            </div><!-- .middle-->
+            <footer class="footer">
+                <form id="steps">
+                    <table style="width: 100%;">
+                        <caption>Brew Schedule</caption>
+                        <thead>
+                            <tr>
+                                <th>READ</th>
+                                <th>SET</th>
+                                <th>TARGET</th>
+                                <th>HOLD</th>
+                                <th>ALERT</th>
+                                <th>WHEN</th>
+                                <th>CONFIRM</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="stepRows">
+                            <tr id="stepRow">
+                                <td>
+                                    <select name="read">
+                                        <% for(var i = 0; i < config.brewnoduino.inputs.analog.length; i++) { %>
+                                        <% if(typeof config.brewnoduino.inputs.analog[i].port != 'undefined') { %>
+                                        <option value="<%= config.brewnoduino.inputs.analog[i].port %>"><%= config.brewnoduino.inputs.analog[i].name %></option>
+                                        <% } %>
+                                        <% } %>
+                                        <% for(var i = 0; i < config.brewnoduino.inputs.digital.length; i++) { %>
+                                        <% if(typeof config.brewnoduino.inputs.digital[i].port != 'undefined') { %>
+                                        <option value="D<%= config.brewnoduino.inputs.digital[i].port %>"><%= config.brewnoduino.inputs.digital[i].name %></option>
+                                        <% } %>
+                                        <% } %>
+                                    </select>
+                                </td>
+                                <td>
+                                    <select name="set">
+                                        <% for(var i = 0; i < config.brewnoduino.outputs.digital.length; i++) { %>
+                                        <% if(typeof config.brewnoduino.outputs.digital[i].port != 'undefined') { %>
+                                        <option value="D<%= config.brewnoduino.outputs.digital[i].port %>"><%= config.brewnoduino.outputs.digital[i].name %></option>
+                                        <% } %>
+                                        <% } %>
+                                        <% for(var i = 0; i < config.brewnoduino.outputs.pwm.length; i++) { %>
+                                        <% if(typeof config.brewnoduino.outputs.pwm[i].port != 'undefined') { %>
+                                        <option value="P<%= config.brewnoduino.outputs.pwm[i].port %>"><%= config.brewnoduino.outputs.pwm[i].name %></option>
+                                        <% } %>
+                                        <% } %>
+                                    </select>
+                                </td>
+                                <td>
+                                    <input type="text" name="target" />
+                                </td>
+                                <td>
+                                    <input type="text" name="hold" />
+                                </td>
+                                <td>
+                                    <input type="text" name="alert" />
+                                </td>
+                                <td>
+                                    <input type="text" name="when" />
+                                </td>
+                                <td>
+                                    <input type="checkbox" name="confirm" />
+                                </td>
+                                <td class="stepDelete">
+
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <br />
+                    <button id="add">ADD</button>
+                    <input type="submit" value="RUN" />
+                </form>
+            </footer><!-- .footer -->
+        </div><!-- .wrapper -->
+        <script>
+            <% for(var i = 0; i < config.brewnoduino.inputs.analog.length; i++) { %>
+            <% if(config.brewnoduino.inputs.analog[i].display == 'temperature') { %>
+            var <%= config.brewnoduino.inputs.analog[i].port %> = "";
+            <% } %>
+            <% } %>
+            var socket = "";
+            $(document).ready(function()
+            {
+                socket = io.connect('');
+
+                socket.on('connect', function ()
+                {
+                    console.log('CONNECTED');
+                });
+
+                /** Due to jquery.knob.js not returning the event, it's a mess to get the id back, do it the long route **/
+                <% for(var i = 0; i < config.brewnoduino.outputs.pwm.length; i++) { %>
+                $('#pwm<%= config.brewnoduino.outputs.pwm[i].port %>').knob(
+                {
+                    'release' : function (v)
+                    {
+                       socket.emit('setPWM', {'port' : '<%= config.brewnoduino.outputs.pwm[i].port %>', 'value' : v});
+                    }
+                });
+                <% } %>
+
+                $('.switch').bind('click' ,function ()
+                {
+                    socket.emit('setDigital', {'port' : $(this).attr('id').replace(/d/g, ''), 'value' : ($(this).hasClass('on')) ? 0 : 1});
+                });
+
+                <% for(var i = 0; i < config.brewnoduino.inputs.analog.length; i++) { %>
+                <% if(config.brewnoduino.inputs.analog[i].display == 'temperature') { %>
+                <%= config.brewnoduino.inputs.analog[i].port %> = new Gauge(
+                    {
+                        renderTo    : '<%= config.brewnoduino.inputs.analog[i].port %>',
+                        width       : 250,
+                        height      : 250,
+                        maxValue    : 220,
+                        glow        : true,
+                        units       : '°<%= config.brewnoduino.inputs.analog[i].units %>',
+                        title       : 'Temp',
+                        valueFormat : { int : 3, dec : 1 },
+                        highlights  : [{ from: 172, to: 220, color: '#FF0000' }]
+                    });
+                <%= config.brewnoduino.inputs.analog[i].port %> = new Gauge(
+                {
+                    renderTo    : '<%= config.brewnoduino.inputs.analog[i].port %>',
+                    width       : 250,
+                    height      : 250,
+                    maxValue    : 220,
+                    glow        : true,
+                    units       : '°<%= config.brewnoduino.inputs.analog[i].units %>',
+                    title       : 'Temp',
+                    valueFormat : { int : 3, dec : 1 },
+                    highlights  : [{ from: 172, to: 220, color: '#F00' }]
+                });
+
+                <%= config.brewnoduino.inputs.analog[i].port %>.setValue(0);
+                
+                socket.on('<%= config.brewnoduino.inputs.analog[i].port %>', function (update)
+                {
+                    <%= config.brewnoduino.inputs.analog[i].port %>.setValue(update.value);
+                });
+                <% } %>
+                <% } %>
+                socket.on('updatePWM', function (data) {
+                    //console.log(data);
+                    $('#pwm' + data.port).val(data.value).trigger('change');
+                });
+
+                socket.on('updateDigital', function (data) {
+                    // Simple, but not elegant.
+                    //console.log(data);
+
+                    $('#d' +  data.port).removeClass('on').removeClass('off');
+                    $('#d' +  data.port).addClass((data.value == '1') ? 'on' : 'off' );
+                });
+
+                $('#add').bind('click', function(e)
+                {
+                    e.preventDefault();
+                    var row = $('tr#stepRow').clone(true).removeAttr('id');
+                    row.find('.stepDelete').html('<div class="removeStep">Remove</div>');
+                    row.appendTo($('#stepRows'));
+                });
+
+                $("#steps").submit(function (e)
+                {
+                    e.preventDefault();
+                    // Better serialization of the data, based on table row. Better to deal with on backend.
+                    var data = [];
+                    $('input[type=checkbox]:not(:checked)').attr('value', 'off');
+                    $('#stepRows').find('tr').each(function () {
+                        var row = {};
+                        $(this).find('input, select, textarea').each(function()
+                        {
+                            row[$(this).attr('name')]=$(this).val();
+                        });
+
+                        data.push(row);
+                    });
+
+                    // Lets run this brew.
+                    socket.emit('runSchedule', data);
+
+                });
+
+                $(document).on('click', '.removeStep', function(){
+                    $(this).closest('tr').remove();
+                });
+
+            });
+        </script>
+    </body>
+</html>

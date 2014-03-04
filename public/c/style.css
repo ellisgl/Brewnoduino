@@ -1,0 +1,229 @@
+/* Eric Meyer's CSS Reset */
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, img, ins, kbd, q, s, samp,
+small, strike, strong, sub, sup, tt, var,
+b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, embed,
+figure, figcaption, footer, header, hgroup,
+menu, nav, output, ruby, section, summary,
+time, mark, audio, video {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	font-size: 100%;
+	font: inherit;
+	vertical-align: baseline;
+}
+/* HTML5 display-role reset for older browsers */
+article, aside, details, figcaption, figure,
+footer, header, hgroup, menu, nav, section {
+	display: block;
+}
+body {
+	line-height: 1;
+}
+ol, ul {
+	list-style: none;
+}
+blockquote, q {
+	quotes: none;
+}
+blockquote:before, blockquote:after,
+q:before, q:after {
+	content: '';
+	content: none;
+}
+table {
+	border-collapse: collapse;
+	border-spacing: 0;
+}
+/* End of Eric Meyer's CSS Reset */
+
+@font-face {
+    font-family: 'impact_labelregular';
+    src: url('/fonts/impact_label_reversed-webfont.eot');
+    src: url('/fonts/impact_label_reversed-webfont.eot?#iefix') format('embedded-opentype'),
+         url('/fonts/impact_label_reversed-webfont.woff') format('woff'),
+         url('/fonts/impact_label_reversed-webfont.ttf') format('truetype'),
+         url('/fonts/impact_label_reversed-webfont.svg#impact_labelregular') format('svg');
+    font-weight: normal;
+    font-style: normal;
+
+}
+article, aside, details, figcaption, figure, footer, header, hgroup, main, nav, section, summary {
+	display: block;
+}
+body {
+	font: 12px/18px Arial, sans-serif;
+	width: 100%;
+}
+/* Begin of styles for the demo (you can remove them) */
+a.expand {
+	width: 90px;
+	display: block;
+	margin: 10px 0 0;
+}
+a.expand:hover {
+	height: 500px;
+}
+/* End of of styles for the demo */
+.wrapper {
+	width: 1000px;
+	margin: 0 auto;
+}
+
+
+/* Header
+-----------------------------------------------------------------------------*/
+.header {
+	height: 150px;
+	background: #FFE680;
+}
+
+
+/* Middle
+-----------------------------------------------------------------------------*/
+.middle {
+	border-right: 250px solid #FFF;
+	position: relative;
+}
+.middle:after {
+	display: table;
+	clear: both;
+	content: '';
+}
+.container {
+	width: 100%;
+	float: left;
+	overflow: hidden;
+	margin-right: -100%;
+}
+.content {
+	padding: 0 20px;
+}
+
+
+/* Right Sidebar
+-----------------------------------------------------------------------------*/
+.right-sidebar {
+	float: right;
+	margin-right: -250px;
+	width: 250px;
+	position: relative;
+}
+
+.clearFix:before,
+.clearFix:after {
+    content: " ";
+    display: table;
+}
+
+.clearFix:after {
+    clear: both;
+}
+/* For IE 6/7 only */
+.clearFix {
+    *zoom: 1;
+}
+
+.tapeText {
+    font-family: 'impact_labelregular', Arial, sans-serif;
+    color: #FFF;
+}
+
+.rotate {
+    font-size: 24px;
+    background-color: #000;
+    display: inline-block;
+    overflow: hidden;
+    width: 38px;
+    line-height: 1.5;    
+    margin-top: 10px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+
+}
+
+.rotate-inner {
+    display: inline-block;
+    white-space: nowrap;
+    
+    /* Safari */
+    -webkit-transform: rotate(-90deg);
+
+    /* Firefox */
+    -moz-transform: rotate(-90deg);
+
+    /* IE */
+    -ms-transform: rotate(-90deg);
+
+    /* Opera */
+    -o-transform: rotate(-90deg);
+
+    /* Internet Explorer */
+    filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=3);    
+}
+.rotate-inner:after {
+     content: "";
+     float: left;
+     margin-top: 100%;
+ }
+
+.kWrapper {
+    float: left;
+    margin: 5px;
+}
+
+.pLabel {
+    background: #000000;
+    color: #FFFFFF;
+    font-family: 'impact_labelregular', Arial, sans-serif;    
+    font-size: 24px;
+    text-align: center;
+    line-height: 1.5;
+}
+
+span.pLabel {
+ padding: 5px;
+}
+
+.sWrapper {
+    /*display: block;*/
+    float: left;
+    width:38px;
+    min-height: 74px;
+    margin-right: 5px;
+}
+
+.switch {
+    width:38px;
+    height:74px;
+    background:url(/i/rocker_switch_small.png) left top no-repeat;
+}
+
+.switch.on {
+    background:url(/i/rocker_switch_small.png) -38px top no-repeat;
+}
+
+.switch.off {
+    background:url(/i/rocker_switch_small.png) left top no-repeat;
+}
+
+/** **/
+body {
+  padding: 50px;
+  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+}
+
+a {
+  color: #00B7FF;
+}
+
+th {
+ text-align: left;
+}
