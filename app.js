@@ -23,18 +23,19 @@ var path       = require('path');
 var fs         = require('fs');
 
 // Firmata
-var serialPort = '/dev/ttyACM0';
-var board      = require('./firmataConnector').start(serialPort);
+var board      = require('./firmataConnector').start(config.brewnoduino.serialPort);
 
 // Schedule runner - child process. (Just for now -- might bring it back into the main if it proves not to block)
 var cProcess   = require('child_process');
 var sRunner    = cProcess.fork('./scheduler');
-var logFile    = "";
 
 // Schedule runner - Using child processes due to blocking code.
 var axon       = require('axon');
-var aRep       = axon.socket('rep');
-aRep.bind(3000);
+var aRep       = axon.socket('rep', null);
+aRep.bind(3000, null, null);
+
+// Brew log.
+var logFile    = "";
 
 // all environments
 app.set('port', process.env.PORT || 8001);
@@ -331,8 +332,8 @@ board.on('connection', function ()
         socket.on('runSchedule', function (data)
         {
             // Send message to child process.
-            //logFile = fs.createWriteStream('./logs/' + (new Date() / 1000) + 'log');
-            //sRunner.send({'p' : config.brewnoduino.k.p, 'i' : config.brewnoduino.k.i, 'd' : config.brewnoduino.k.d, 'steps': data.steps});
+            logFile = fs.createWriteStream('./logs/' + (new Date() / 1000) + 'log');
+            sRunner.send({'p' : config.brewnoduino.k.p, 'i' : config.brewnoduino.k.i, 'd' : config.brewnoduino.k.d, 'steps': data.steps});
             console.log(data);
 
         });

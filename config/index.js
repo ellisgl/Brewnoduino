@@ -1,14 +1,15 @@
 var config = module.exports;
 
 config.brewnoduino = {
-    'k'    : {
+    serialPort : '/dev/ttyACM0',
+    'k'        : {
       'p' : 0.25,
       'i' : 0.01,
       'd' : 0.01
     },
     'resistor' : 9000, // Resistor value for thermistor devices, set to 0 if using TMP device.
     'voltage'  : 5, // Arduino operating voltage (3.3 or 5) - Used for certain analog devices.
-    'outputs': {
+    'outputs'  : {
         'pwm'     : [
             {
                 'name' : 'Heater',
@@ -39,7 +40,7 @@ config.brewnoduino = {
             }
         ]
     },
-    'inputs': { 
+    'inputs'  : {
         'analog' : [
             // Need to add OneWire support here. even though digital?
             {
