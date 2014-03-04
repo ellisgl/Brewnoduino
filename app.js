@@ -20,7 +20,6 @@ var config     = require('./config');
 var http       = require('http');
 var routes     = require('./routes');
 var path       = require('path');
-var user       = require('./routes/user');
 var fs         = require('fs');
 
 // Firmata
