@@ -2,10 +2,13 @@ var config = module.exports;
 
 config.brewnoduino = {
     serialPort : '/dev/ttyACM0',
+    'OneWire'  : {
+        'pin' : '2'
+    },
     'k'        : {
-      'p' : 0.25,
-      'i' : 0.01,
-      'd' : 0.01
+        'p' : 0.25,
+        'i' : 0.01,
+        'd' : 0.01
     },
     'resistor' : 9000, // Resistor value for thermistor devices, set to 0 if using TMP device.
     'voltage'  : 5, // Arduino operating voltage (3.3 or 5) - Used for certain analog devices.
