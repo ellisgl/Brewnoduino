@@ -95,7 +95,7 @@ aReq.on('connect', function()
                                 }\n\
                             });\n\
                             global.aReq.send({"action" : "logIt"});\n\
-                        }, 250);');
+                        }, 100);');
 
                     steps.push(stepFunc);
                 }
