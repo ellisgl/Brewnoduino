@@ -28,7 +28,7 @@ var board      = require('./firmataConnector').start(config.brewnoduino.serialPo
 
 // Schedule runner - child process. (Just for now -- might bring it back into the main if it proves not to block)
 var cProcess   = require('child_process');
-var sRunner    = cProcess.fork('./scheduler');
+cProcess.fork('./scheduler');
 
 // Bidirectional communication with call backs.
 var axon       = require('axon');
@@ -207,7 +207,7 @@ board.on('connection', function ()
                    switch(analog.type)
                    {
                        case 'thermistor':
-                           tReading = thermistor(val, config.brewnoduino.resistor)
+                           tReading = thermistor(val, config.brewnoduino.resistor);
                        break;
 
                        case 'tmp36':
@@ -227,7 +227,7 @@ board.on('connection', function ()
                    switch(analog.type)
                    {
                        case 'thermistor':
-                           tReading = thermistor(val, config.brewnoduino.resistor)
+                           tReading = thermistor(val, config.brewnoduino.resistor);
                            break;
 
                        case 'tmp36':
@@ -271,6 +271,16 @@ board.on('connection', function ()
 
         board.digitalWrite(port, value);
         io.sockets.emit('updateDigital', {'ts': ts, 'port' : port, 'value' : value});
+    }
+
+    function logIt()
+    {
+        var d  = new Date();
+        var ts = d.getTime();
+        // Logs all port values
+        var entry = {};
+        entry[ts] = ports;
+        logFile.write('    ' + JSON.stringify(entry) + '\n');
     }
 
     // Schedule runner stuff
@@ -325,9 +335,12 @@ board.on('connection', function ()
                 break;
 
             case 'done':
-
                 io.sockets.emit('done');
-                break;
+            break;
+
+            case 'logIt':
+                logIt();
+            break;
         }
     });
 
@@ -374,16 +387,11 @@ board.on('connection', function ()
         socket.on('runSchedule', function (data)
         {
             // Send message to child process.
-            logFile = fs.createWriteStream('./logs/' + (new Date() / 1000) + '.log');
+            logFile = fs.createWriteStream('./logs/' + (Math.round(new Date() / 1000)) + '.log');
+
+            logFile.write('{\n');
             //sRunner.send({'action' : 'start', 'p' : config.brewnoduino.k.p, 'i' : config.brewnoduino.k.i, 'd' : config.brewnoduino.k.d, 'steps': data});
             aReq.send({'action' : 'start', 'p' : config.brewnoduino.k.p, 'i' : config.brewnoduino.k.i, 'd' : config.brewnoduino.k.d, 'steps': data}, function(res){});
-        });
-
-        socket.on('logIt', function()
-        {
-            var ts = new Date() / 1000;
-            // Logs all port values
-            logFile.write(ts + ' :::: ' + JSON.stringify(ports) + '\n');
         });
 
         socket.on('done', function()
@@ -391,6 +399,7 @@ board.on('connection', function ()
             // Brew schedule done.
             // Close log file.
             socket.emit('finished');
+            logFile.write('}');
             logFile.end();
         });
 
