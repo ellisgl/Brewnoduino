@@ -4,15 +4,6 @@
  * By EllisGL
  */
 /**
- * TODO:
- * Scheduler: Add more options
- *            Figure out how if there's a way around having to use globals.
- * Digital input displays
- * OneWire Temperature support
- * Manual Temp setting
- * Clean this mess up
- */
-/**
  * Module dependencies.
  */
 var express    = require('express');
