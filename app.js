@@ -5,7 +5,8 @@
  */
 /**
  * TODO:
- * Scheduler: Compile into function to run in async
+ * Scheduler: Add more options
+ *            Figure out how if there's a way around having to use globals.
  * Digital input displays
  * OneWire Temperature support
  * Manual Temp setting
@@ -29,10 +30,13 @@ var board      = require('./firmataConnector').start(config.brewnoduino.serialPo
 var cProcess   = require('child_process');
 var sRunner    = cProcess.fork('./scheduler');
 
-// Schedule runner - Using child processes due to blocking code.
+// Bidirectional communication with call backs.
 var axon       = require('axon');
 var aRep       = axon.socket('rep', null);
-aRep.bind(3000, null, null);
+aRep.bind(8002);
+
+var aReq       = axon.socket('req', null);
+aReq.connect(8003);
 
 // Brew log.
 var logFile    = "";
@@ -58,12 +62,12 @@ app.use(app.router);
 app.use(express.static(path.join(__dirname, 'public')));
 
 // development only
-if ('development' == app.get('env')) {
-  app.use(express.errorHandler());
+if('development' == app.get('env')) {
+    app.use(express.errorHandler());
 }
 
 var server = http.createServer(app).listen(app.get('port'), function(){
-  console.log('Express server listening on port ' + app.get('port'));
+    console.log('Express server listening on port ' + app.get('port'));
 });
 
 var io = require('socket.io').listen(server);
@@ -187,12 +191,12 @@ board.on('connection', function ()
                    // Convert to F and store
                    if(analog.display == 'temperature')
                    {
-                        ports.input.analog[analog.port].val = roundTo((analog.units == 'F') ? convertCF(sum / ports.input.analog[analog.port].sArr.length)
+                        ports.input.analog[analog.port].value = roundTo((analog.units == 'F') ? convertCF(sum / ports.input.analog[analog.port].sArr.length)
                                                                                             : (sum / ports.input.analog[analog.port].sArr.length), 1).toFixed(1);
                    }
                    else
                    {
-                       ports.input.analog[analog.port].val = (sum / ports.input.analog[analog.port].sArr.length);
+                       ports.input.analog[analog.port].value = (sum / ports.input.analog[analog.port].sArr.length);
                    }
 
                    // Reset the array.
@@ -284,35 +288,46 @@ board.on('connection', function ()
 
     aRep.on('connect', function()
     {
-        console.log('aRep CONNECTED');
+        console.log('Parent aRep connected');
     });
 
-    aRep.on('bind', function()
+    aReq.on('connect', function()
     {
-        console.log('aRep BOUND TO 3000')
+        console.log('Parent aReq connected');
     });
 
     aRep.on('message', function (data, reply)
     {
+        var port = '';
+
         switch(data.action)
         {
             case 'getAnalog':
-                reply({'data': ports.analog.input['data.port']});
-            break;
+                reply({'data': ports.input.analog[data.port].value});
+                break;
 
             case 'getDigitalInput':
-            break;
+                port = data.port.replace(/^DI/, '');
+                break;
 
             case 'getDigitalOutput':
-            break;
+                break;
 
             case 'setDigital':
-            break;
+                port = data.port.replace(/^DO/, '');
+                break;
 
             case 'setPWM':
-                setPWM(data.port, data.value);
+                // Strip P.
+                port = data.port.replace(/^P/, '');
+                setPWM(port, data.value);
                 reply('ok');
-            break;
+                break;
+
+            case 'done':
+
+                io.sockets.emit('done');
+                break;
         }
     });
 
@@ -342,14 +357,12 @@ board.on('connection', function ()
             setInterval(function()
             {
                 var ts = Date.now();
-                //console.log(ts + ':' + temp1);
-                socket.emit(analog.port, {'ts' : ts, 'value' : ports.input.analog[analog.port].val});
+                socket.emit(analog.port, {'ts' : ts, 'value' : ports.input.analog[analog.port].value});
             }, 1000);
         }
 
         socket.on('setDigital', function (data)
         {
-            console.log(data);
             setDigital(data.port, data.value)
         });
 
@@ -361,10 +374,9 @@ board.on('connection', function ()
         socket.on('runSchedule', function (data)
         {
             // Send message to child process.
-            logFile = fs.createWriteStream('./logs/' + (new Date() / 1000) + 'log');
-            sRunner.send({'p' : config.brewnoduino.k.p, 'i' : config.brewnoduino.k.i, 'd' : config.brewnoduino.k.d, 'steps': data.steps});
-            console.log(data);
-
+            logFile = fs.createWriteStream('./logs/' + (new Date() / 1000) + '.log');
+            //sRunner.send({'action' : 'start', 'p' : config.brewnoduino.k.p, 'i' : config.brewnoduino.k.i, 'd' : config.brewnoduino.k.d, 'steps': data});
+            aReq.send({'action' : 'start', 'p' : config.brewnoduino.k.p, 'i' : config.brewnoduino.k.i, 'd' : config.brewnoduino.k.d, 'steps': data}, function(res){});
         });
 
         socket.on('logIt', function()

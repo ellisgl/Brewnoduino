@@ -6,7 +6,7 @@ config.brewnoduino = {
         'pin' : '2'
     },
     'k'        : {
-        'p' : 0.25,
+        'p' : 0.75,
         'i' : 0.01,
         'd' : 0.01
     },
@@ -16,17 +16,16 @@ config.brewnoduino = {
         'pwm'     : [
             {
                 'name' : 'Heater',
-                'port' : '9',
+                'port' : '10',
                 'min'  : 0,
-                'max'  : 255            
+                'max'  : 255
             },
             {
                 'name' : 'Pump',
-                'port' : '10',
+                'port' : '9',
                 'min'  : 0,
                 'max'  : 255            
-            }            
-            
+            }
         ],
         'digital' : [
             {

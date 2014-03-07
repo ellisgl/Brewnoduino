@@ -88,14 +88,14 @@
                                 </td>
                                 <td>
                                     <label><select name="set">
-                                        <% for(i = 0; i < config.brewnoduino.outputs.digital.length; i++) { %>
-                                        <% if(typeof config.brewnoduino.outputs.digital[i].port != 'undefined') { %>
-                                        <option value="D<%= config.brewnoduino.outputs.digital[i].port %>"><%= config.brewnoduino.outputs.digital[i].name %></option>
-                                        <% } %>
-                                        <% } %>
                                         <% for(i = 0; i < config.brewnoduino.outputs.pwm.length; i++) { %>
                                         <% if(typeof config.brewnoduino.outputs.pwm[i].port != 'undefined') { %>
                                         <option value="P<%= config.brewnoduino.outputs.pwm[i].port %>"><%= config.brewnoduino.outputs.pwm[i].name %></option>
+                                        <% } %>
+                                        <% } %>
+                                        <% for(i = 0; i < config.brewnoduino.outputs.digital.length; i++) { %>
+                                        <% if(typeof config.brewnoduino.outputs.digital[i].port != 'undefined') { %>
+                                        <option value="D<%= config.brewnoduino.outputs.digital[i].port %>"><%= config.brewnoduino.outputs.digital[i].name %></option>
                                         <% } %>
                                         <% } %>
                                     </select></label>
@@ -204,6 +204,11 @@
                     //console.log(data);
 
                     $('#d' +  data.port).removeClass('on').removeClass('off').addClass((data.value == '1') ? 'on' : 'off' );
+                });
+
+                socket.on('done', function()
+                {
+                    alert('DONE!');
                 });
 
                 $('#add').bind('click', function(e)

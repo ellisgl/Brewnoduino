@@ -1,65 +1,114 @@
 // child.js
 console.log('child starting work');
-var async = require('async');
-var axon  = require('axon');
-var pCtrl = require('node-pid-controller');
+var async          = require('async');
+var axon           = require('axon');
+var pCtrl          = require('node-pid-controller');
 
-var aReq  = axon.socket('req');
-var d     = new Date();
-var pid   = "";
-var steps = [];
+// Bidirectional Communication
+var aReq           = axon.socket('req');
+var aRep           = axon.socket('rep');
+var aRepData       = [];
 
-aReq.connect(3000);
+// Stop the warnings
+var steps          = [];
+var i              = 0;
 
-process.on('message', function(data)
+// Bidirectional communication with call backs.
+aReq.connect(8002);
+aRep.bind(8003);
+
+aRep.on('connect', function()
 {
-    switch(data.action)
-    {
-        case 'start':
-            pid   = new pCtrl(data['p'], data['i'], data['d']);
-            steps = [];
-
-            steps.push(data['steps']);
-            async.series(steps);
-         break;
-    }
+    console.log('Child aRep CONNECTED');
 });
 
-test = [
-    function(cb)
+// Such hacks. Polluting the scope with this one.
+global.getStepsData = function (i)
+{
+    return aRepData.steps[i];
+}
+
+global.aRep        = aRep;
+global.aReq        = aReq;
+global.pid         = "";
+global.sData       = {};
+global.pVal        = 0;
+global.tReached    = false;
+global.target      = 0;
+global.runTime     = 0;
+global.startTime   = 0;
+
+aReq.on('connect', function()
+{
+    console.log('Child aReq CONNECTED');
+
+    aRep.on('message', function(data, ret)
     {
-        var target        = 148;    // Target value.
-        var targetReached = false;  // Did we reach the target?
-        var runTime       = 3600;   // How long to continue running after we hit target.
-        var startTime     = 0;      // What time did we hit the target.
-        var brewTimer     = setInterval(function()
+        aRepData = data;
+
+        switch(data.action)
         {
-            aReq.send({'action' : 'getAnalog', 'port': 'A0'}, function(resp)
-            {
-                // We hit our target
-                if(!targetReached && resp.value >= target)
+            case 'start':
+                global.pid = new pCtrl(data['p'], data['i'], data['d']);
+                steps      = [];
+
+                for(i = 0; i < data.steps.length; i++)
                 {
-                    targetReached = true;
-                    startTime     = d.getTime() / 1000;
+                    var stepFunc = new Function('cb' , '\n\
+                        global.sData     = global.getStepsData(' + i + ');\n\
+                        global.target    = parseFloat(global.sData.target);\n\
+                        global.runTime   = parseFloat(global.sData.hold);\n\
+                        global.tReached  = false;\n\
+                        global.startTime = 0;\n\
+                        \n\
+                        global.pid.setTarget(global.target);\n\
+                        \n\
+                        var brewTimer     = setInterval(function()\n\
+                        {\n\
+                            global.aReq.send({"action" : "getAnalog", "port" : global.sData.read }, function (resp)\n\
+                            {\n\
+                                var d        = new Date();\n\
+                                var respData = parseFloat(resp.data);\n\
+                                if(!global.tReached && parseFloat(respData) >= global.target)\n\
+                                {\n\
+                                    global.tReached  = true;\n\
+                                    global.startTime = Math.ceil(d.getTime() / 1000);\n\
+                                }\n\
+                                \n\
+                                if(global.tReached && (Math.ceil(d.getTime() / 1000)) - global.startTime >= global.runTime)\n\
+                                {\n\
+                                    clearInterval(brewTimer);\n\
+                                    cb(null);\n\
+                                }\n\
+                                \n\
+                                /** Calculate PID output **/\n\
+                                //var pVal = (255 + global.pid.update(respData) > 0) ? 255 + global.pid.update(respData) : 0;\n\
+                                var pVal = (global.pid.update(respData) > 0) ? Math.floor(global.pid.update(respData)) : 0;\n\
+                                \n\
+                                if(pVal != global.pVal)\n\
+                                {\n\
+                                    global.aReq.send({"action" : "setPWM", "port" : global.sData.set, "value": pVal}, function(msg)\n\
+                                    {\n\
+                                    \n\
+                                    });\n\
+                                }\n\
+                            });\n\
+                        }, 1000);');
+
+                    steps.push(stepFunc);
                 }
 
-                if((d.getTime() / 1000) - startTime >= runTime)
+                steps.push(function(cb)
                 {
-                    clearInterval(brewTimer);
+                    // Finished
+                    global.aReq.send({'action' : 'done'});
                     cb(null);
-                }
-
-                aReq.send({'action' : 'setPWM', 'port': '9', 'value': pid.update(data.value)}, function(msg)
-                {
-                   // Nothing.
                 });
-            });
-        }, 1000);
-    },
-    function(cb)
-    {
-        // Finsiehd
-        aReq.send({'action' : 'done'});
-        cb(null);
-    }
-];
+
+                async.series(steps);
+             break;
+        }
+
+        ret(1);
+    });
+});
