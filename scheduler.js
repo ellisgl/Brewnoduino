@@ -26,13 +26,13 @@ aRep.on('connect', function()
 global.getStepsData = function (i)
 {
     return aRepData.steps[i];
-}
+};
 
 global.aRep        = aRep;
 global.aReq        = aReq;
 global.pid         = "";
 global.sData       = {};
-global.pVal        = 0;
+global.pidVal      = 0;
 global.tReached    = false;
 global.target      = 0;
 global.runTime     = 0;
@@ -82,18 +82,20 @@ aReq.on('connect', function()
                                 }\n\
                                 \n\
                                 /** Calculate PID output **/\n\
-                                //var pVal = (255 + global.pid.update(respData) > 0) ? 255 + global.pid.update(respData) : 0;\n\
-                                var pVal = (global.pid.update(respData) > 0) ? Math.floor(global.pid.update(respData)) : 0;\n\
+                                var uVal = Math.floor(global.pid.update(respData));\n\
+                                var pVal = (uVal >= 1.0) ? uVal : 0;\n\
                                 \n\
-                                if(pVal != global.pVal)\n\
+                                if(pVal != global.pidVal)\n\
                                 {\n\
+                                    global.pidVal = pVal;\n\
                                     global.aReq.send({"action" : "setPWM", "port" : global.sData.set, "value": pVal}, function(msg)\n\
                                     {\n\
                                     \n\
                                     });\n\
                                 }\n\
                             });\n\
-                        }, 1000);');
+                            global.aReq.send({"action" : "logIt"});\n\
+                        }, 250);');
 
                     steps.push(stepFunc);
                 }
