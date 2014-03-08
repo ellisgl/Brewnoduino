@@ -3,6 +3,7 @@ console.log('child starting work');
 var async          = require('async');
 var axon           = require('axon');
 var pCtrl          = require('node-pid-controller');
+var pidCtrl        = require('x1022-pid-controller-js');
 
 // Bidirectional Communication
 var aReq           = axon.socket('req');
@@ -49,10 +50,16 @@ aReq.on('connect', function()
         switch(data.action)
         {
             case 'start':
-                global.pid = new pCtrl(data['p'], data['i'], data['d']);
+                //global.pid = new pCtrl(data['p'], data['i'], data['d']);
+                global.pid = new pidCtrl({
+                    Kp : data['p'],
+                    Ki : data['i'],
+                    Kd : data['d']
+                });
+
                 steps      = [];
 
-                for(i = 0; i < data.steps.length; i++)
+                    for(i = 0; i < data.steps.length; i++)
                 {
                     var stepFunc = new Function('cb' , '\n\
                         global.sData     = global.getStepsData(' + i + ');\n\
@@ -62,40 +69,44 @@ aReq.on('connect', function()
                         global.startTime = 0;\n\
                         \n\
                         global.pid.setTarget(global.target);\n\
+                        console.log(global.sData.target);\n\
+                        console.log(global.target);\n\
                         \n\
-                        var brewTimer     = setInterval(function()\n\
+                        global.pid.setInput(function()\n\
                         {\n\
                             global.aReq.send({"action" : "getAnalog", "port" : global.sData.read }, function (resp)\n\
                             {\n\
-                                var d        = new Date();\n\
-                                var respData = parseFloat(resp.data);\n\
-                                if(!global.tReached && parseFloat(respData) >= global.target)\n\
-                                {\n\
-                                    global.tReached  = true;\n\
-                                    global.startTime = Math.ceil(d.getTime() / 1000);\n\
-                                }\n\
-                                \n\
-                                if(global.tReached && (Math.ceil(d.getTime() / 1000)) - global.startTime >= global.runTime)\n\
-                                {\n\
-                                    clearInterval(brewTimer);\n\
-                                    cb(null);\n\
-                                }\n\
-                                \n\
-                                /** Calculate PID output **/\n\
-                                var uVal = Math.floor(global.pid.update(respData));\n\
-                                var pVal = (uVal >= 1.0) ? uVal : 0;\n\
-                                \n\
-                                if(pVal != global.pidVal)\n\
-                                {\n\
-                                    global.pidVal = pVal;\n\
-                                    global.aReq.send({"action" : "setPWM", "port" : global.sData.set, "value": pVal}, function(msg)\n\
-                                    {\n\
-                                    \n\
-                                    });\n\
-                                }\n\
+                                global.pid.setIVal(parseFloat(resp.data));\n\
                             });\n\
+                        });\n\
+                        \n\
+                        global.pid.setOutput(function(val)\n\
+                        {\n\
+                            global.aReq.send({"action" : "setPWM", "port" : global.sData.set, "value": val}, function(msg)\n\
+                            {\n\
+                                \n\
+                            });\n\
+                        });\n\
+                        \n\
+                        global.pid.start();\n\
+                        \n\
+                        var brewTimer     = setInterval(function()\n\
+                        {\n\
+                            if(!global.tReached && global.pid.status().tReached == true)\n\
+                            {\n\
+                                global.tReached = true;\n\
+                                global.startTime = Math.ceil(d.getTime() / 1000);\n\
+                            }\n\
+                            \n\
+                            if(global.tReached && (Math.ceil(d.getTime() / 1000)) - global.startTime >= global.runTime)\n\
+                            {\n\
+                                clearInterval(brewTimer);\n\
+                                global.pid.stop();\n\
+                                cb(null);\n\
+                            }\n\
+                            \n\
                             global.aReq.send({"action" : "logIt"});\n\
-                        }, 100);');
+                        }, 500);');
 
                     steps.push(stepFunc);
                 }
