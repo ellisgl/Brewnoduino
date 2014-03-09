@@ -2,7 +2,6 @@
 console.log('child starting work');
 var async          = require('async');
 var axon           = require('axon');
-var pCtrl          = require('node-pid-controller');
 var pidCtrl        = require('x1022-pid-controller-js');
 
 // Bidirectional Communication

@@ -10,7 +10,7 @@ config.brewnoduino = {
         'i' : 0.01,
         'd' : 0.01
     },
-    'resistor' : 9000, // Resistor value for thermistor devices, set to 0 if using TMP device.
+    'resistor' : 9500, // Resistor value for thermistor devices, set to 0 if using TMP device.
     'voltage'  : 5, // Arduino operating voltage (3.3 or 5) - Used for certain analog devices.
     'outputs'  : {
         'pwm'     : [
