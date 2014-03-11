@@ -332,6 +332,10 @@ board.on('connection', function ()
             case 'logIt':
                 logIt();
             break;
+
+            case 'message':
+                io.sockets.emit('message', {'data' : data.message});
+            break;
         }
     });
 

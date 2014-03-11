@@ -68,11 +68,10 @@ aReq.on('connect', function()
                         global.startTime = 0;\n\
                         \n\
                         global.pid.setTarget(global.target);\n\
-                        console.log(global.sData.target);\n\
-                        console.log(global.target);\n\
                         \n\
                         global.pid.setInput(function()\n\
                         {\n\
+                            \n\
                             global.aReq.send({"action" : "getAnalog", "port" : global.sData.read }, function (resp)\n\
                             {\n\
                                 global.pid.setIVal(parseFloat(resp.data));\n\
@@ -91,8 +90,18 @@ aReq.on('connect', function()
                         \n\
                         var brewTimer     = setInterval(function()\n\
                         {\n\
-                            if(!global.tReached && global.pid.status().tReached == true)\n\
+                            var status = global.pid.status();\n\
+                            \n\
+                            var d      = new Date();\n\
+                            \n\
+                            if(!global.tReached && status.tReached == true)\n\
                             {\n\
+                                \n\
+                                global.aReq.send({"action" : "message", "message" : "TARGET HIT"}, function(msg)\n\
+                                {\n\
+                                    \n\
+                                });\n\
+                                \n\
                                 global.tReached = true;\n\
                                 global.startTime = Math.ceil(d.getTime() / 1000);\n\
                             }\n\
@@ -101,6 +110,12 @@ aReq.on('connect', function()
                             {\n\
                                 clearInterval(brewTimer);\n\
                                 global.pid.stop();\n\
+                                \n\
+                                global.aReq.send({"action" : "message", "message" : "STEP DONE"}, function(msg)\n\
+                                {\n\
+                                    \n\
+                                });\n\
+                                \n\
                                 cb(null);\n\
                             }\n\
                             \n\

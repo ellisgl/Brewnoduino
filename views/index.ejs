@@ -211,6 +211,10 @@
                     alert('DONE!');
                 });
 
+                socket.on('message', function(data) {
+                    //alert(data);
+                });
+
                 $('#add').bind('click', function(e)
                 {
                     e.preventDefault();
@@ -237,7 +241,6 @@
 
                     // Lets run this brew.
                     socket.emit('runSchedule', data);
-
                 });
 
                 $(document).on('click', '.removeStep', function(){

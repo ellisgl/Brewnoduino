@@ -2,27 +2,24 @@ var config = module.exports;
 
 config.brewnoduino = {
     serialPort : '/dev/ttyACM0',
-    'OneWire'  : {
-        'pin' : '2'
-    },
     'k'        : {
-        'p' : 20.00,
+        'p' : 10.00,
         'i' : 0.01,
         'd' : 0.01
     },
-    'resistor' : 9500, // Resistor value for thermistor devices, set to 0 if using TMP device.
+    'resistor' : '9000', // Resistor value for thermistor devices, set to 0 if using TMP device.
     'voltage'  : 5, // Arduino operating voltage (3.3 or 5) - Used for certain analog devices.
     'outputs'  : {
         'pwm'     : [
             {
                 'name' : 'Heater',
-                'port' : '10',
+                'port' : '9',
                 'min'  : 0,
                 'max'  : 255
             },
             {
                 'name' : 'Pump',
-                'port' : '9',
+                'port' : '10',
                 'min'  : 0,
                 'max'  : 255            
             }
@@ -58,6 +55,7 @@ config.brewnoduino = {
                 'name'     : 'rims',
                 'port'     : 'OneWire',
                 'address'  : '0x00',
+                'type'     : 'DS18B20', // DS18B20, ???
                 'getValue' : ['0x00, 0x00, 0x00, 0x00, 0x00'],
                 'display'  : 'temperature', // Only temperature as of now.
                 'units'    : 'F' // F or C
