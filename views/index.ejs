@@ -52,6 +52,12 @@
                     <canvas id="<%= config.brewnoduino.inputs.analog[i].port %>"></canvas>
                     <% } %>
                     <% } %>
+                    <% for(var i = 0; i < config.brewnoduino.OneWire.devices.length; i++) { %>
+                    <% if(config.brewnoduino.OneWire.devices[i].display == 'temperature') { %>
+                    <div class="pLabel"><%= config.brewnoduino.OneWire.devices[i].name %></div>
+                    <canvas id="OW<%= config.brewnoduino.OneWire.devices[i].address.join('') %>"></canvas>
+                    <% } %>
+                    <% } %>
                 </aside><!-- .right-sidebar -->
             </div><!-- .middle-->
             <footer class="footer">
@@ -130,9 +136,10 @@
         <script>
             <% for(i = 0; i < config.brewnoduino.inputs.analog.length; i++) { %>
             <% if(config.brewnoduino.inputs.analog[i].display == 'temperature') { %>
-            var <%= config.brewnoduino.inputs.analog[i].port %> = "";
+            <%= 'var ' + config.brewnoduino.inputs.analog[i].port + ' = "";' %>
             <% } %>
             <% } %>
+
             var socket = "";
             $(document).ready(function()
             {
@@ -161,7 +168,7 @@
 
                 <% for(i = 0; i < config.brewnoduino.inputs.analog.length; i++) { %>
                 <% if(config.brewnoduino.inputs.analog[i].display == 'temperature') { %>
-                <%= config.brewnoduino.inputs.analog[i].port %> = new Gauge(
+                var <%= config.brewnoduino.inputs.analog[i].port %> = new Gauge(
                     {
                         renderTo    : '<%= config.brewnoduino.inputs.analog[i].port %>',
                         width       : 250,
@@ -173,24 +180,36 @@
                         valueFormat : { int : 3, dec : 1 },
                         highlights  : [{ from: 172, to: 220, color: '#FF0000' }]
                     });
-                <%= config.brewnoduino.inputs.analog[i].port %> = new Gauge(
-                {
-                    renderTo    : '<%= config.brewnoduino.inputs.analog[i].port %>',
-                    width       : 250,
-                    height      : 250,
-                    maxValue    : 220,
-                    glow        : true,
-                    units       : '°<%= config.brewnoduino.inputs.analog[i].units %>',
-                    title       : 'Temp',
-                    valueFormat : { int : 3, dec : 1 },
-                    highlights  : [{ from: 172, to: 220, color: '#F00' }]
-                });
 
                 <%= config.brewnoduino.inputs.analog[i].port %>.setValue(0);
                 
                 socket.on('<%= config.brewnoduino.inputs.analog[i].port %>', function (update)
                 {
                     <%= config.brewnoduino.inputs.analog[i].port %>.setValue(update.value);
+                });
+                <% } %>
+                <% } %>
+
+                <% for(i = 0; i < config.brewnoduino.OneWire.devices.length; i++) { %>
+                <% if(config.brewnoduino.OneWire.devices[i].display == 'temperature') { %>
+                var OW<%= config.brewnoduino.OneWire.devices[i].address.join('') %> = new Gauge(
+                    {
+                        renderTo    : 'OW<%= config.brewnoduino.OneWire.devices[i].address.join('') %>',
+                        width       : 250,
+                        height      : 250,
+                        maxValue    : 220,
+                        glow        : true,
+                        units       : '°<%= config.brewnoduino.OneWire.devices[i].units %>',
+                        title       : 'Temp',
+                        valueFormat : { int : 3, dec : 1 },
+                        highlights  : [{ from: 172, to: 220, color: '#FF0000' }]
+                    });
+
+                OW<%= config.brewnoduino.OneWire.devices[i].address.join('') %>.setValue(0);
+
+                socket.on('OW<%= config.brewnoduino.OneWire.devices[i].address.join('') %>', function (update)
+                {
+                    OW<%= config.brewnoduino.OneWire.devices[i].address.join('') %>.setValue(update.value);
                 });
                 <% } %>
                 <% } %>
