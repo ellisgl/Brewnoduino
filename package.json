@@ -9,7 +9,7 @@
     "express": "3.4.8",
     "ejs": "*",
     "socket.io": "*",
-    "firmata": "~0.3.2",
+    "firmata": "~0.3.3",
     "async": "^0.2.10",
     "axon": "^2.0.0",
     "x1022-pid-controller-js": "*"

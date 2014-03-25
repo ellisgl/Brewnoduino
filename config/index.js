@@ -9,18 +9,17 @@ config.brewnoduino = {
     },
     'resistor' : '11000', // Resistor value for thermistor devices, set to 0 if using TMP device.
     'voltage'  : 5, // Arduino operating voltage (3.3 or 5) - Used for certain analog devices.
-    'OneWire'  : 2,
     'outputs'  : {
         'pwm'     : [
             {
                 'name' : 'Heater',
-                'port' : '9',
+                'port' : '3',
                 'min'  : 0,
                 'max'  : 255
             },
             {
                 'name' : 'Pump',
-                'port' : '10',
+                'port' : '5',
                 'min'  : 0,
                 'max'  : 255            
             }
@@ -28,11 +27,11 @@ config.brewnoduino = {
         'digital' : [
             {
                 'name' : 'Aux 1',
-                'port' : '11'
+                'port' : '6'
             },
             {
                 'name' : 'Aux 2',
-                'port' : '12'
+                'port' : '11'
             },        
             {
                 'name' : 'LED',
