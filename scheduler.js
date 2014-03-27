@@ -58,7 +58,7 @@ aReq.on('connect', function()
 
                 steps      = [];
 
-                    for(i = 0; i < data.steps.length; i++)
+                for(i = 0; i < data.steps.length; i++)
                 {
                     var stepFunc = new Function('cb' , '\n\
                         global.sData     = global.getStepsData(' + i + ');\n\
@@ -72,7 +72,11 @@ aReq.on('connect', function()
                         global.pid.setInput(function()\n\
                         {\n\
                             \n\
-                            global.aReq.send({"action" : "getAnalog", "port" : global.sData.read }, function (resp)\n\
+                            var action = (global.sData.read.match(/^A/)) ? "getAnalog" \
+                                                                         : (global.sData.read.match(/^DI/)) \
+                                                                         ? "getDigitalInput"\
+                                                                         : "getOneWire";\n\
+                            global.aReq.send({"action" : action, "port" : global.sData.read }, function (resp)\n\
                             {\n\
                                 global.pid.setIVal(parseFloat(resp.data));\n\
                             });\n\

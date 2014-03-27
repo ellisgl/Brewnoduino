@@ -101,8 +101,8 @@ function DS18B20(board, device)
             return;
         }
 
-        var temp = ((data[1] << 8) | data[0]) / 16.0;
-
+        var temp                = ((data[1] << 8) | data[0]) / 16.0;
+        var OW                  = 'OW' + device.address.join('');
         ports.OneWire[OW].value = roundTo((device.units == 'F') ? convertCF(temp) : temp, 1).toFixed(1);
     });
 }
@@ -368,16 +368,17 @@ board.on('connection', function ()
         {
             case 'getAnalog':
                 reply({'data': ports.input.analog[data.port].value});
-                break;
+            break;
 
             case 'getDigitalInput':
                 port = data.port.replace(/^DI/, '');
             break;
 
             case 'getOneWire':
-                // Stuff
+                console.log(ports.OneWire);
+                console.log(data.port);
+                reply({'data': ports.OneWire[data.port].value});
             break;
-
 
             case 'getDigitalOutput':
             break;
@@ -444,11 +445,12 @@ board.on('connection', function ()
             {
 
                 var device = config.brewnoduino.OneWire.devices[i];
-                var OW = 'OW' + device.address.join('');
+                var OW     = 'OW' + device.address.join('');
 
                 setInterval(function ()
                 {
                     var ts = Date.now();
+
                     DS18B20(board, device);
                     socket.emit(OW, {'ts' : ts, 'value' : ports.OneWire[OW].value});
                 }, 1000);
@@ -471,7 +473,6 @@ board.on('connection', function ()
             logFile = fs.createWriteStream('./logs/' + (Math.round(new Date() / 1000)) + '.log');
 
             logFile.write('{\n');
-            //sRunner.send({'action' : 'start', 'p' : config.brewnoduino.k.p, 'i' : config.brewnoduino.k.i, 'd' : config.brewnoduino.k.d, 'steps': data});
             aReq.send({'action' : 'start', 'p' : config.brewnoduino.k.p, 'i' : config.brewnoduino.k.i, 'd' : config.brewnoduino.k.d, 'steps': data}, function(res){});
         });
 

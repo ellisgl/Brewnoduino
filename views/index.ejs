@@ -90,6 +90,11 @@
                                         <option value="D<%= config.brewnoduino.inputs.digital[i].port %>"><%= config.brewnoduino.inputs.digital[i].name %></option>
                                         <% } %>
                                         <% } %>
+                                        <% for(i = 0; i < config.brewnoduino.OneWire.devices.length; i++) { %>
+                                        <% if(typeof config.brewnoduino.OneWire.devices[i].address != 'undefined') { %>
+                                        <option value="OW<%= config.brewnoduino.OneWire.devices[i].address.join('') %>"><%= config.brewnoduino.OneWire.devices[i].name %></option>
+                                        <% } %>
+                                        <% } %>
                                     </select></label>
                                 </td>
                                 <td>
