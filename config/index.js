@@ -3,8 +3,8 @@ var config = module.exports;
 config.brewnoduino = {
     serialPort : '/dev/ttyACM0',
     'k'        : {
-        'p' : 5.00,
-        'i' : 0.01,
+        'p' : 17.90,
+        'i' : 1.00,
         'd' : 0.01
     },
     'resistor' : '11000', // Resistor value for thermistor devices, set to 0 if using TMP device.

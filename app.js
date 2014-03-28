@@ -17,7 +17,6 @@ var fs         = require('fs');
 // Firmata
 var board      = require('./firmataConnector').start(config.brewnoduino.serialPort);
 
-
 // Schedule runner - child process. (Just for now -- might bring it back into the main if it proves not to block)
 var cProcess   = require('child_process');
 cProcess.fork('./scheduler');
@@ -375,8 +374,8 @@ board.on('connection', function ()
             break;
 
             case 'getOneWire':
-                console.log(ports.OneWire);
-                console.log(data.port);
+                //console.log(ports.OneWire);
+                //console.log(data.port);
                 reply({'data': ports.OneWire[data.port].value});
             break;
 

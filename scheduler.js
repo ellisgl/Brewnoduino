@@ -49,11 +49,10 @@ aReq.on('connect', function()
         switch(data.action)
         {
             case 'start':
-                //global.pid = new pCtrl(data['p'], data['i'], data['d']);
                 global.pid = new pidCtrl({
-                    Kp : data['p'],
-                    Ki : data['i'],
-                    Kd : data['d']
+                    KP : data['p'],
+                    KI : data['i'],
+                    KD : data['d']
                 });
 
                 steps      = [];
@@ -76,7 +75,7 @@ aReq.on('connect', function()
                                                                          : (global.sData.read.match(/^DI/)) \
                                                                          ? "getDigitalInput"\
                                                                          : "getOneWire";\n\
-                            global.aReq.send({"action" : action, "port" : global.sData.read }, function (resp)\n\
+                            return global.aReq.send({"action" : action, "port" : global.sData.read }, function (resp)\n\
                             {\n\
                                 global.pid.setIVal(parseFloat(resp.data));\n\
                             });\n\
@@ -92,40 +91,28 @@ aReq.on('connect', function()
                         \n\
                         global.pid.start();\n\
                         \n\
-                        var brewTimer     = setInterval(function()\n\
-                        {\n\
-                            var status = global.pid.status();\n\
-                            \n\
-                            var d      = new Date();\n\
-                            \n\
-                            if(!global.tReached && status.tReached == true)\n\
+                        global.pid.on("start", function()\n\
+                        { \n\
+                            global.aReq.send({"action" : "message", "message" : "STEP STARTED"}, function(msg)\n\
                             {\n\
                                 \n\
-                                global.aReq.send({"action" : "message", "message" : "TARGET HIT"}, function(msg)\n\
-                                {\n\
-                                    \n\
-                                });\n\
-                                \n\
-                                global.tReached = true;\n\
-                                global.startTime = Math.ceil(d.getTime() / 1000);\n\
-                            }\n\
-                            \n\
-                            if(global.tReached && (Math.ceil(d.getTime() / 1000)) - global.startTime >= global.runTime)\n\
+                            });\n\
+                        });\n\
+                        global.pid.on("targetReached", function()\n\
+                        { \n\
+                            global.aReq.send({"action" : "message", "message" : "TARGET HIT"}, function(msg)\n\
                             {\n\
-                                clearInterval(brewTimer);\n\
-                                global.pid.stop();\n\
                                 \n\
-                                global.aReq.send({"action" : "message", "message" : "STEP DONE"}, function(msg)\n\
-                                {\n\
-                                    \n\
-                                });\n\
+                            });\n\
+                        });\n\
+                        global.pid.on("stop", function()\n\
+                        { \n\
+                            global.aReq.send({"action" : "message", "message" : "STEP DONE"}, function(msg)\n\
+                            {\n\
                                 \n\
-                                cb(null);\n\
-                            }\n\
-                            \n\
-                            global.aReq.send({"action" : "logIt"});\n\
-                        }, 500);');
-
+                            });\n\
+                        });\n\
+                    ');
                     steps.push(stepFunc);
                 }
 
