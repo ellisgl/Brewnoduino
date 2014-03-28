@@ -49,7 +49,7 @@ aReq.on('connect', function()
                     KD : data['d']
                 });
 
-                pid.on('start', (function(aReq)
+                pid.on('started', (function(aReq)
                 {
                     return function()
                     {
@@ -79,7 +79,7 @@ aReq.on('connect', function()
                     {
                         return function(cb)
                         {
-                            pid.on('stop',(function(cb, aReq)
+                            pid.on('stopped',(function(cb, aReq)
                             {
                                 return function()
                                 {
@@ -128,12 +128,15 @@ aReq.on('connect', function()
                     steps.push(stepFunc);
                 }
 
-                steps.push(function(cb)
+                steps.push((function()
                 {
-                    // Finished
-                    global.aReq.send({'action' : 'done'});
-                    cb(null);
-                });
+                    return function(cb)
+                    {
+                        // Finished
+                        aReq.send({'action' : 'done'});
+                        cb(null);
+                    };
+                })(aReq));
 
                 async.series(steps);
              break;
