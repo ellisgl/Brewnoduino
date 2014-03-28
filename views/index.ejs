@@ -220,7 +220,8 @@
                 <% } %>
                 socket.on('updatePWM', function (data) {
                     //console.log(data);
-                    $('#pwm' + data.port).val(data.value).trigger('change');
+                    $('#pwm' + data.port).val(data.value).trigger('draw'); //.trigger('change');
+
                 });
 
                 socket.on('updateDigital', function (data) {

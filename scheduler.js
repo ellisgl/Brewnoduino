@@ -3,10 +3,11 @@ console.log('child starting work');
 var async          = require('async');
 var axon           = require('axon');
 var pidCtrl        = require('x1022-pid-controller-js');
+var pid            = {};
 
 // Bidirectional Communication
-var aReq           = axon.socket('req');
-var aRep           = axon.socket('rep');
+var aReq           = axon.socket('req', null);
+var aRep           = axon.socket('rep', null);
 var aRepData       = [];
 
 // Stop the warnings
@@ -28,15 +29,6 @@ global.getStepsData = function (i)
     return aRepData.steps[i];
 };
 
-global.aRep        = aRep;
-global.aReq        = aReq;
-global.pid         = "";
-global.sData       = {};
-global.pidVal      = 0;
-global.tReached    = false;
-global.target      = 0;
-global.runTime     = 0;
-global.startTime   = 0;
 
 aReq.on('connect', function()
 {
@@ -49,70 +41,90 @@ aReq.on('connect', function()
         switch(data.action)
         {
             case 'start':
-                global.pid = new pidCtrl({
+                steps      = [];
+
+                pid = new pidCtrl({
                     KP : data['p'],
                     KI : data['i'],
                     KD : data['d']
                 });
 
-                steps      = [];
+                pid.on('start', (function(aReq)
+                {
+                    return function()
+                    {
+                        console.log('START START START');
+
+                        aReq.send({'action' : 'message', 'message' : 'STEP STARTED'}, function(msg)
+                        {
+                        });
+
+                    }
+                })(aReq));
+
+                pid.on('targetReached', (function(aReq)
+                {
+                    return function()
+                    {
+                        console.log('REACHED REACHED REACHED');
+                        aReq.send({'action' : 'message', 'message' : 'TARGET HIT'}, function(msg)
+                        {
+                        });
+                    }
+                })(aReq));
 
                 for(i = 0; i < data.steps.length; i++)
                 {
-                    var stepFunc = new Function('cb' , '\n\
-                        global.sData     = global.getStepsData(' + i + ');\n\
-                        global.target    = parseFloat(global.sData.target);\n\
-                        global.runTime   = parseFloat(global.sData.hold);\n\
-                        global.tReached  = false;\n\
-                        global.startTime = 0;\n\
-                        \n\
-                        global.pid.setTarget(global.target);\n\
-                        \n\
-                        global.pid.setInput(function()\n\
-                        {\n\
-                            \n\
-                            var action = (global.sData.read.match(/^A/)) ? "getAnalog" \
-                                                                         : (global.sData.read.match(/^DI/)) \
-                                                                         ? "getDigitalInput"\
-                                                                         : "getOneWire";\n\
-                            return global.aReq.send({"action" : action, "port" : global.sData.read }, function (resp)\n\
-                            {\n\
-                                global.pid.setIVal(parseFloat(resp.data));\n\
-                            });\n\
-                        });\n\
-                        \n\
-                        global.pid.setOutput(function(val)\n\
-                        {\n\
-                            global.aReq.send({"action" : "setPWM", "port" : global.sData.set, "value": val}, function(msg)\n\
-                            {\n\
-                                \n\
-                            });\n\
-                        });\n\
-                        \n\
-                        global.pid.start();\n\
-                        \n\
-                        global.pid.on("start", function()\n\
-                        { \n\
-                            global.aReq.send({"action" : "message", "message" : "STEP STARTED"}, function(msg)\n\
-                            {\n\
-                                \n\
-                            });\n\
-                        });\n\
-                        global.pid.on("targetReached", function()\n\
-                        { \n\
-                            global.aReq.send({"action" : "message", "message" : "TARGET HIT"}, function(msg)\n\
-                            {\n\
-                                \n\
-                            });\n\
-                        });\n\
-                        global.pid.on("stop", function()\n\
-                        { \n\
-                            global.aReq.send({"action" : "message", "message" : "STEP DONE"}, function(msg)\n\
-                            {\n\
-                                \n\
-                            });\n\
-                        });\n\
-                    ');
+                    var  stepFunc = (function(data, sData, pid, aReq)
+                    {
+                        return function(cb)
+                        {
+                            pid.on('stop',(function(cb, aReq)
+                            {
+                                return function()
+                                {
+                                    console.log('STOP STOP STOP');
+                                    aReq.send({'action' : 'message', 'message' : 'STEP DONE'}, function(msg)
+                                    {
+
+                                    });
+
+                                    cb();
+                                }
+                            })(cb, aReq));
+
+                            pid.setTarget(sData.target);
+                            pid.setDuration(sData.hold);
+
+                            pid.setInput((function(read)
+                            {
+                                return function()
+                                {
+                                    var action = (read.match(/^A/)) ? 'getAnalog'
+                                        : (read.match(/^DI/))
+                                        ? 'getDigitalInput'
+                                        : 'getOneWire';
+                                    aReq.send({"action" : action, "port" : read }, function (resp)
+                                    {
+                                        pid.setIVal(parseFloat(resp.data));
+                                    });
+                                }
+                            })(sData.read));
+
+                            pid.setOutput((function(sData)
+                            {
+                                return function (val)
+                                {
+                                    aReq.send({'action' : 'setPWM', 'port' : sData.set, 'value' : val}, function (msg)
+                                    {
+                                    });
+                                }
+                            }(sData)));
+
+                            pid.start();
+                        }
+                    })(data, aRepData.steps[i], pid, aReq);
+
                     steps.push(stepFunc);
                 }
 

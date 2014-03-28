@@ -19,6 +19,7 @@ var board      = require('./firmataConnector').start(config.brewnoduino.serialPo
 
 // Schedule runner - child process. (Just for now -- might bring it back into the main if it proves not to block)
 var cProcess   = require('child_process');
+
 cProcess.fork('./scheduler');
 
 // Bidirectional communication with call backs.
