@@ -44,9 +44,9 @@ aReq.on('connect', function()
                 steps      = [];
 
                 pid = new pidCtrl({
-                    KP : data['p'],
-                    KI : data['i'],
-                    KD : data['d']
+                    Kp : data['p'],
+                    Ki : data['i'],
+                    Kd : data['d']
                 });
 
                 pid.on('started', (function(aReq)
